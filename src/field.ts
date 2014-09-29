@@ -1,3 +1,5 @@
+/// <reference path="integerVector.ts" />
+
 interface StaticAttractor {
   position: IntegerVector;
   mass: number;
@@ -29,48 +31,19 @@ class GravityField {
   constructor(xField: Int16Array, yField: Int16Array, attractor?: StaticAttractor) {
     this.xField = new Int16Array(FIELD_ARRAY_SIZE);
     this.yField = new Int16Array(FIELD_ARRAY_SIZE);
-    if (!attractor) {
-      for (var i=0; i<FIELD_ARRAY_SIZE; i++) {
-        this.xField[i] = xField[i];
-        this.yField[i] = yField[i];
-      }
-    } else {
-      var attractorXPosition = pixel2fieldX(attractor.position.x());
-      var i = 0;
-      for (var x=0; x<X_GRAVITY_MAX; x++) {
-        var g = GravityField.computeFieldContribution(x, attractorXPosition, attractor.mass);
-        for (var y=0; y<Y_GRAVITY_MAX; y++) {
-          this.xField[i] = xField[i] + g;
-          i++;
-        }
-      }
-      if (i != FIELD_ARRAY_SIZE) {
-        throw new Error("something really bad happened: x");
-      }
-      var i = 0;
-      var attractorYPosition = pixel2fieldY(attractor.position.y());
+
+    var i = 0;
+    for (var x=0; x<X_GRAVITY_MAX; x++) {
       for (var y=0; y<Y_GRAVITY_MAX; y++) {
-        var g = GravityField.computeFieldContribution(y, attractorYPosition, attractor.mass);
-        for (var x=0; x<X_GRAVITY_MAX; x++) {
-          this.yField[i] = yField[i] + g;
-          i++;
-        }
-      }
-      if (i != FIELD_ARRAY_SIZE) {
-        throw new Error("something really bad happened: y");
+        var g = attractor.mass * GRAVITATIONAL_CONSTANT / (Math.pow(x - attractor.position.x(), 2) + Math.pow(y - attractor.position.y(), 2));
+        this.xField[i] = xField[i] + g;
+        this.yField[i] = yField[i] + g;
       }
     }
   }
 
   public addAttractor(attractor: StaticAttractor): GravityField {
     return new GravityField(this.xField, this.yField, attractor);
-  }
-
-  public static computeFieldContribution(position, source, mass) {
-    var direction = position < source ? 1 : -1;
-    var distSq = (position - source) * (position - source);
-    var g = distSq != 0 ? (GRAVITATIONAL_CONSTANT * mass / distSq) | 0 : 0;
-    return g;
   }
 }
 
